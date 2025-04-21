@@ -40,8 +40,6 @@ def tts():
     voice = request.args.get('voice', 'maria')
     temperature = float(request.args.get('temperature', 0.6))
     top_p = float(request.args.get('top_p', 0.9))
-    print(type(temperature), temperature)
-    print(type(top_p), top_p)
     
     def generate_audio_stream():
         yield create_wav_header()
