@@ -1,9 +1,14 @@
 from flask import Flask, Response, request
-import struct
+import struct, time
 from orpheus_tts import OrpheusModel
+from flask_cors import CORS
 
 app = Flask(__name__)
-engine = OrpheusModel(model_name="canopylabs/orpheus-tts-0.1-finetune-prod")
+
+CORS(app)
+
+# engine = OrpheusModel(model_name="canopylabs/3b-es_it-pretrain-research_release")
+engine = OrpheusModel(model_name="canopylabs/3b-es_it-ft-research_release")
 
 def create_wav_header(sample_rate=24000, bits_per_sample=16, channels=1):
     byte_rate = sample_rate * channels * bits_per_sample // 8
@@ -31,19 +36,24 @@ def create_wav_header(sample_rate=24000, bits_per_sample=16, channels=1):
 
 @app.route('/tts', methods=['GET'])
 def tts():
-    prompt = request.args.get('prompt', 'Hey there, looks like you forgot to provide a prompt!')
-
+    prompt = request.args.get('prompt', 'Hola, parece que olvidaste incluir un texto')
+    voice = request.args.get('voice', 'maria')
+    temperature = float(request.args.get('temperature', 0.6))
+    top_p = float(request.args.get('top_p', 0.9))
+    print(type(temperature), temperature)
+    print(type(top_p), top_p)
+    
     def generate_audio_stream():
         yield create_wav_header()
 
         syn_tokens = engine.generate_speech(
             prompt=prompt,
-            voice="tara",
+            voice=voice,
             repetition_penalty=1.1,
             stop_token_ids=[128258],
             max_tokens=2000,
-            temperature=0.4,
-            top_p=0.9
+            temperature=temperature,
+            top_p=top_p
         )
         for chunk in syn_tokens:
             yield chunk
